@@ -1,7 +1,7 @@
 # src/webdantic/core/selector.py
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 
 from playwright.async_api import Locator
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
@@ -152,3 +152,65 @@ class Selector(BaseModel):
             raise TimeoutError(
                 f"Timeout waiting for element '{self.selector}' to be {state}: {e}"
             ) from e
+    
+    async def children(self) -> list["Selector"]:
+        """
+        Get all direct child elements as Selector instances.
+
+        The order matches DOM order.
+        """
+        try:
+            # :scope > * = all direct children of the current element
+            children_locator = self._locator.locator(":scope > *")
+            count = await children_locator.count()
+
+            children: list[Selector] = []
+            for index in range(count):
+                child_locator = children_locator.nth(index)
+
+                # Build a descriptive selector string (purely for debugging)
+                child_selector = f"{self.selector} >> :scope > *:nth-child({index + 1})"
+
+                children.append(
+                    Selector(
+                        selector=child_selector,
+                        page=self._page,
+                        locator=child_locator,
+                    )
+                )
+
+            return children
+        except Exception as e:
+            raise SelectorError(
+                f"Failed to get children of element '{self.selector}': {e}"
+            ) from e
+
+    async def nth_child(self, index: int) -> "Selector":
+        """
+        Get the nth direct child element (0-based index) as a Selector.
+        """
+        if index < 0:
+            raise SelectorError("Child index must be >= 0")
+
+        try:
+            children_locator = self._locator.locator(":scope > *")
+            child_locator = children_locator.nth(index)
+
+            # Ensure it exists (raises if not)
+            await child_locator.wait_for(state="attached")
+
+            child_selector = f"{self.selector} >> :scope > *:nth-child({index + 1})"
+
+            return Selector(
+                selector=child_selector,
+                page=self._page,
+                locator=child_locator,
+            )
+        except Exception as e:
+            raise SelectorError(
+                f"Failed to get child index {index} of element '{self.selector}': {e}"
+            ) from e
+
+    async def first_child(self) -> "Selector":
+        """Convenience helper to get the first direct child."""
+        return await self.nth_child(0)

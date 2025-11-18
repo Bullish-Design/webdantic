@@ -3,6 +3,7 @@ __pycache__/
 *.py[codz]
 *$py.class
 screenshots/** 
+examples/tab_extract.py
 
 # C extensions
 *.so
