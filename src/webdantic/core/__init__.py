@@ -6,6 +6,7 @@ from webdantic.core.page import Page
 from webdantic.core.selector import Selector
 from webdantic.core.tab import Tab
 from webdantic.core.window import Window
+from webdantic.views import ListView, TableView, ListItem, TableRow
 
 __all__ = [
     "Browser",
@@ -13,4 +14,8 @@ __all__ = [
     "Selector",
     "Tab",
     "Window",
+    "ListItem",
+    "ListView",
+    "TableRow",
+    "TableView",
 ]

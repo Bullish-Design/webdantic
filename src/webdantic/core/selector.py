@@ -214,3 +214,22 @@ class Selector(BaseModel):
     async def first_child(self) -> "Selector":
         """Convenience helper to get the first direct child."""
         return await self.nth_child(0)
+
+    async def iter_children(self) -> AsyncIterator["Selector"]:
+        """Iterate children one by one as Selectors."""
+        try:
+            children_locator = self._locator.locator(":scope > *")
+            count = await children_locator.count()
+
+            for index in range(count):
+                child_locator = children_locator.nth(index)
+                child_selector = f"{self.selector} >> :scope > *:nth-child({index + 1})"
+                yield Selector(
+                    selector=child_selector,
+                    page=self._page,
+                    locator=child_locator,
+                )
+        except Exception as e:
+            raise SelectorError(
+                f"Failed to iterate children of element '{self.selector}': {e}"
+            ) from e
