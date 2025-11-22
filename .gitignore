@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 screenshots/** 
 examples/tab_extract.py
+scripts/selector_dumps/**
 
 # C extensions
 *.so
